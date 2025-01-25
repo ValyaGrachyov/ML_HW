@@ -1,0 +1,51 @@
+import random, math
+
+# Координаты хотя бы 6 городов
+cities = [(0,2),(2,5),(5,2),(6,6),(8,3),(3,8),(1,6)]
+
+def distance(route):
+    dist = 0
+    for i in range(len(route)):
+        x1, y1 = cities[route[i]]
+        x2, y2 = cities[route[(i+1)%len(route)]]
+        dist += math.hypot(x2 - x1, y2 - y1)
+    return dist
+
+def create_route():
+    r = list(range(len(cities)))
+    random.shuffle(r)
+    return r
+
+def crossover(p1, p2):
+    start, end = sorted([random.randint(0, len(p1)-1) for _ in range(2)])
+    child = [None]*len(p1)
+    child[start:end] = p1[start:end]
+    ptr = 0
+    for city in p2:
+        if city not in child:
+            while child[ptr] is not None:
+                ptr += 1
+            child[ptr] = city
+    return child
+
+def mutate(route, rate=0.01):
+    for i in range(len(route)):
+        if random.random() < rate:
+            j = random.randint(0, len(route)-1)
+            route[i], route[j] = route[j], route[i]
+
+pop_size = 100
+population = [create_route() for _ in range(pop_size)]
+generations = 1000
+
+for _ in range(generations):
+    ranked = sorted(population, key=distance)
+    population = ranked[:10]  # элита
+    while len(population) < pop_size:
+        p1, p2 = random.choices(ranked[:50], k=2)
+        child = crossover(p1, p2)
+        mutate(child)
+        population.append(child)
+
+best = min(population, key=distance)
+print("Лучший маршрут:", best, "Расстояние:", distance(best))
